@@ -1,0 +1,125 @@
+service: serverless-1
+frameworkVersion: '3'
+
+custom:
+  tableName: 'users-${self:provider.stage}'
+  productTableName: 'products-${self:provider.stage}'
+  orderTableName: 'orders-${self:provider.stage}'
+provider:
+  name: aws
+  runtime: nodejs14.x
+  profile: test
+  stage: dev
+  region: us-east-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:DescribeTable
+        - dynamodb:Query
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:PutItem
+        - dynamodb:UpdateItem
+        - dynamodb:DeleteItem
+      Resource:
+        - { "Fn::GetAtt": ["UserTable", "Arn" ] }
+  environment:
+    USER_TABLE: ${self:custom.tableName}
+    PRODUCT_TABLE: ${self:custom.productTableName}
+    ORDER_TABLE: ${self:custom.orderTableName}
+
+functions:
+  create:
+    handler: users/create.create
+    events:
+      - http:
+          path: users
+          method: post
+
+  get:
+    handler: users/get.get
+    events:
+      - http:
+          path: users/{id}
+          method: get
+  list:
+    handler: users/list.list
+    events:
+      - http:
+          path: users
+          method: get
+  delete:
+    handler: users/delete.delete
+    events:
+      - http:
+          path: users/{id}
+          method: delete
+
+  createProduct:
+    handler: products/create.create
+    events:
+      - http:
+          path: products
+          method: post
+
+  getProductById:
+    handler: products/get.get
+    events:
+      - http:
+          path: products/{id}
+          method: get
+
+  listProduct:
+    handler: products/list.list
+    events:
+      - http:
+          path: products/
+          method: get
+
+resources:
+  Resources:
+    UserTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.tableName}
+    ProductTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.productTableName}
+    OrderTable:
+      Type: 'AWS::DynamoDB::Table'
+      Properties:
+        AttributeDefinitions:
+          -
+            AttributeName: id
+            AttributeType: S
+        KeySchema:
+          -
+            AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:custom.orderTableName}
